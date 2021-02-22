@@ -273,7 +273,7 @@ TDMS_SetGroupDataValues(TDMS_Group_t *Group,
  * @param  Second: Normal Second (0 to 59)
  * @retval Second part of TDMS Timestamp
  */
-uint64_t
+int64_t
 TDMS_TimeSecond(uint16_t Year, uint8_t Month, uint8_t Day,
                 uint8_t Hour, uint8_t Minute, uint8_t Second);
 

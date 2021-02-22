@@ -1041,16 +1041,18 @@ TDMS_SetGroupDataValues(TDMS_Group_t *Group,
  * @param  Second: Normal Second (0 to 59)
  * @retval Second part of TDMS Timestamp
  */
-uint64_t
+int64_t
 TDMS_TimeSecond(uint16_t Year, uint8_t Month, uint8_t Day,
                 uint8_t Hour, uint8_t Minute, uint8_t Second)
 {
-  uint32_t DiffDay = TDMS_DateDef(Day, Month, Year);
+  uint32_t DiffDay;
+  int64_t DiffSecond;
 
-  uint64_t DiffSecond = (Hour)   * 3600 +
-                        (Minute) * 60   +
-                        (Second)        +
-                        DiffDay  * 86400ul;
+  DiffDay = TDMS_DateDef(Day, Month, Year);
+  DiffSecond  = (int64_t) (DiffDay * 86400ul);
+  DiffSecond += (int64_t) (Hour * 3600); 
+  DiffSecond += (int64_t) (Minute * 60);
+  DiffSecond += (int64_t) (Second);
 
   return DiffSecond;
 }
