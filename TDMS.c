@@ -912,7 +912,7 @@ TDMS_SetGroupDataValues(TDMS_Group_t *Group,
   va_list valist;
 
   /* initialize valist for num number of arguments */
-  va_start(valist, (Group->NumOfChannels * 2));
+  va_start(valist, Size);
 
   for(CounterI=0; CounterI<(Group->NumOfChannels); CounterI++)
   {
