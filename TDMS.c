@@ -1041,6 +1041,7 @@ TDMS_SetGroupDataValues(TDMS_Group_t *Group,
  * @param  Second: Normal Second (0 to 59)
  * @retval Second part of TDMS Timestamp
  */
+                        //The most significant 64 bits of timestamp
 int64_t
 TDMS_TimeSecond(uint16_t Year, uint8_t Month, uint8_t Day,
                 uint8_t Hour, uint8_t Minute, uint8_t Second)
@@ -1049,10 +1050,27 @@ TDMS_TimeSecond(uint16_t Year, uint8_t Month, uint8_t Day,
   int64_t DiffSecond;
 
   DiffDay = TDMS_DateDef(Day, Month, Year);
-  DiffSecond  = (int64_t) (DiffDay * 86400ul);
-  DiffSecond += (int64_t) (Hour * 3600); 
-  DiffSecond += (int64_t) (Minute * 60);
+  DiffSecond  = ((int64_t)DiffDay * 86400ul);
+  DiffSecond += ((int64_t)Hour * 3600); 
+  DiffSecond += ((int64_t)Minute * 60);
   DiffSecond += (int64_t) (Second);
 
   return DiffSecond;
+}
+
+
+
+// when input = 500ms then output should be = 9223372036854775808
+// so this function should multiply input MS in 18446744073709552 factor
+#define factor 18446744073709552
+/**
+   @brief  Calculate first part of TDMS Timestamp from milliseconds input
+   @param  ms: milliSecond
+   @retval first part of TDMS Timestamp
+*/
+                          //The least significant 64 bits of timestamp
+int64_t
+TDMS_TimeMilliSecond(uint64_t ms)
+{
+  return factor*(ms%1000);
 }
