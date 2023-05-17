@@ -36,6 +36,32 @@
 #define kTocDAQmxRawData      0x00000080
 
 /**
+ * @brief  Data type constants
+ */
+#define tdsTypeVoid                   0x00000000
+#define tdsTypeI8                     0x00000001
+#define tdsTypeI16                    0x00000002
+#define tdsTypeI32                    0x00000003
+#define tdsTypeI64                    0x00000004
+#define tdsTypeU8                     0x00000005
+#define tdsTypeU16                    0x00000006
+#define tdsTypeU32                    0x00000007
+#define tdsTypeU64                    0x00000008
+#define tdsTypeSingleFloat            0x00000009
+#define tdsTypeDoubleFloat            0x0000000A
+#define tdsTypeExtendedFloat          0x0000000B
+#define tdsTypeSingleFloatWithUnit    0x00000019
+#define tdsTypeDoubleFloatWithUnit    0x0000001A
+#define tdsTypeExtendedFloatWithUnit  0x0000001B
+#define tdsTypeString                 0x00000020
+#define tdsTypeBoolean                0x00000021
+#define tdsTypeTimeStamp              0x00000044
+#define tdsTypeFixedPoint             0x0000004F
+#define tdsTypeComplexSingleFloat     0x0008000C
+#define tdsTypeComplexDoubleFloat     0x0010000D
+#define tdsTypeDAQmxRawData           0xFFFFFFFF
+
+/**
  * @brief  LabVIEW Timestamp base
  */
 #define BaseYear    1904
@@ -61,11 +87,60 @@ const int8_t
     daysPerMonth[2][13] = {{-1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
                            {-1, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
 
+const uint32_t dataTypeBinary[TDMS_DataType_MAX] =
+{
+  [TDMS_DataType_Void] = tdsTypeVoid,
+  [TDMS_DataType_I8] = tdsTypeI8,
+  [TDMS_DataType_I16] = tdsTypeI16,
+  [TDMS_DataType_I32] = tdsTypeI32,
+  [TDMS_DataType_I64] = tdsTypeI64,
+  [TDMS_DataType_U8] = tdsTypeU8,
+  [TDMS_DataType_U16] = tdsTypeU16,
+  [TDMS_DataType_U32] = tdsTypeU32,
+  [TDMS_DataType_U64] = tdsTypeU64,
+  [TDMS_DataType_SingleFloat] = tdsTypeSingleFloat,
+  [TDMS_DataType_DoubleFloat] = tdsTypeDoubleFloat,
+  [TDMS_DataType_ExtendedFloat] = tdsTypeExtendedFloat,
+  [TDMS_DataType_SingleFloatWithUnit] = tdsTypeSingleFloatWithUnit,
+  [TDMS_DataType_DoubleFloatWithUnit] = tdsTypeDoubleFloatWithUnit,
+  [TDMS_DataType_ExtendedFloatWithUnit] = tdsTypeExtendedFloatWithUnit,
+  [TDMS_DataType_String] = tdsTypeString,
+  [TDMS_DataType_Boolean] = tdsTypeBoolean,
+  [TDMS_DataType_TimeStamp] = tdsTypeTimeStamp,
+  [TDMS_DataType_FixedPoint] = tdsTypeFixedPoint,
+  [TDMS_DataType_ComplexSingleFloat] = tdsTypeComplexSingleFloat,
+  [TDMS_DataType_ComplexDoubleFloat] = tdsTypeComplexDoubleFloat
+};
+
+const uint8_t dataTypeLength[TDMS_DataType_MAX] =
+{
+  [TDMS_DataType_Void] = 1,
+  [TDMS_DataType_I8] = sizeof(int8_t),
+  [TDMS_DataType_I16] = sizeof(int16_t),
+  [TDMS_DataType_I32] = sizeof(int32_t),
+  [TDMS_DataType_I64] = sizeof(int64_t),
+  [TDMS_DataType_U8] = sizeof(uint8_t),
+  [TDMS_DataType_U16] = sizeof(uint16_t),
+  [TDMS_DataType_U32] = sizeof(uint32_t),
+  [TDMS_DataType_U64] = sizeof(uint64_t),
+  [TDMS_DataType_SingleFloat] = sizeof(float),
+  [TDMS_DataType_DoubleFloat] = sizeof(double),
+  [TDMS_DataType_ExtendedFloat] = 0,
+  [TDMS_DataType_SingleFloatWithUnit] = 0,
+  [TDMS_DataType_DoubleFloatWithUnit] = 0,
+  [TDMS_DataType_ExtendedFloatWithUnit] = 0,
+  [TDMS_DataType_String] = 0,
+  [TDMS_DataType_Boolean] = sizeof(uint8_t),
+  [TDMS_DataType_TimeStamp] = sizeof(TDMS_Timestamp_t),
+  [TDMS_DataType_FixedPoint] = 0,
+  [TDMS_DataType_ComplexSingleFloat] = 0,
+  [TDMS_DataType_ComplexDoubleFloat] = 0
+};
 
 
 /**
  ==================================================================================
-                           ##### Private Functions #####                           
+                           ##### Private Functions #####
  ==================================================================================
  */
 
@@ -122,46 +197,20 @@ TDMS_DateDef(uint8_t Day, uint8_t Month, uint16_t Year)
 
 
 /**
- * @brief  Copy a string to another
- * @param  Dest: Destination buffer
- * @param  Src: Source string
- * @param  DestSize: Size of Destination buffer
- * @retval TDMS_Result_t
- *         - TDMS_OK: Operation was successful
- *         - TDMS_WRONG_ARG: Destination length is low
- */
-static TDMS_Result_t
-TDMS_StrnCpy(char *Dest, const char *Src, uint16_t DestSize)
-{
-  uint16_t SrcSize = strlen(Src);
-  if(SrcSize < DestSize)
-  {
-    memcpy(Dest, Src, SrcSize);
-    Dest[SrcSize] = '\0';
-    return TDMS_OK;
-  }
-  else
-  {
-    return TDMS_WRONG_ARG;
-  }
-}
-
-
-/**
  * @brief  Generation Channel Group path in TDMS file ==> /'Channel Group Name' 
- * @param  Group: Pointer to the Channel Group structure
- * @param  path: Pointer to a string that Channel Group path save into
+ * @param  Path: Pointer to a string that Channel Group path save into
+ * @param  Name: Channel Group name
  * @retval If successful, String size of Channel Group path excluding the
  *         null-character appended at the end of the string. (return value >= 0)
  *         Else return value < 0
  */
-static int16_t
-TDMS_GenerateGroupPath(TDMS_Group_t *Group, char *path)
+static inline int16_t
+TDMS_GenerateGroupPath(char *Path, char *Name)
 {
   int16_t Retval = -1;
 
-  if (path)
-    Retval = sprintf(path, "/'%s'", Group->GroupName);
+  if (Path)
+    Retval = sprintf(Path, "/'%s'", Name);
 
   return Retval;
 }
@@ -170,25 +219,25 @@ TDMS_GenerateGroupPath(TDMS_Group_t *Group, char *path)
 /**
  * @brief  Generation Channel path in TDMS file
  *         ==> /'Channel Group Name'/'Channel Name'
+ * @note   Channel Group path must be generated before Channel path
  * @param  Group: Pointer to The Channel Group structure address where the
  *                Channel object assign into
- * @param  Channel: Pointer to the Channel structure
  * @param  path: Pointer to a string that Channel path save into.
+ * @param  Name: Channel name
  * @retval If successful, String size of Channel Group path excluding the
  *         null-character appended at the end of the string. (return value >= 0)
  *         Else return value < 0
  */
-static int16_t
+static inline int16_t
 TDMS_GenerateChannelPath(TDMS_Group_t *Group,
-                         TDMS_Channel_t *Channel,
-                         char *path)
+                         char *Path, char *Name)
 {
   int16_t Retval = -1;
 
-  if (path)
-    Retval = sprintf(path, "/'%s'/'%s'",
-                     Group->GroupName,
-                     Channel->ChannelName);
+  if (Path)
+    Retval = sprintf(Path, "%s/'%s'",
+                     Group->GroupPath,
+                     Name);
 
   return Retval;
 }
@@ -276,78 +325,6 @@ TDMS_SaveStrToMetaDataPart(uint8_t *data, const char *str)
 
 
 /**
- * @brief  Calculates number of bytes taken by each data type
- * @param  TdsDataType: TDMS Raw Data type
- * @retval Size in Bytes
- */
-static uint8_t
-TDMS_DataBytesOfEachType(TDMS_Data_t TdsDataType)
-{
-  uint8_t DataLen = 0; // Bytes
-  switch(TdsDataType)
-  {
-    case tdsTypeVoid:
-      DataLen = 1;
-      break;
-    
-    case tdsTypeI8:
-      DataLen = sizeof(int8_t);
-      break;
-    
-    case tdsTypeI16:
-      DataLen = sizeof(int16_t);
-      break;
-    
-    case tdsTypeI32:
-      DataLen = sizeof(int32_t);
-      break;
-    
-    case tdsTypeI64:
-      DataLen = sizeof(int64_t);
-      break;
-    
-    case tdsTypeU8:
-      DataLen = sizeof(uint8_t);
-      break;
-    
-    case tdsTypeU16:
-      DataLen = sizeof(uint16_t);
-      break;
-    
-    case tdsTypeU32:
-      DataLen = sizeof(uint32_t);
-      break;
-    
-    case tdsTypeU64:
-      DataLen = sizeof(uint64_t);
-      break;
-    
-    case tdsTypeSingleFloat:
-      DataLen = sizeof(float);
-      break;
-    
-    case tdsTypeDoubleFloat:
-      DataLen = sizeof(double);
-      break;
-    
-    case tdsTypeString:
-      DataLen = sizeof(char); // indeterminate
-      break;
-      
-    case tdsTypeBoolean:
-      DataLen = sizeof(uint8_t);
-      break;
-
-    case tdsTypeTimeStamp:
-      DataLen = sizeof(TDMS_Timestamp_t);
-      break;
-  }
-  
-  return DataLen;
-}
-
-
-/**
  * @brief  Generates TDMS segment Lead IN part
  * @param  LeadInSTR: Pointer to area that Lead In part footprint stores into
  * @param  ToC_value: Indicate what kind of data the segment contains
@@ -385,6 +362,115 @@ TDMS_GenerateLeadInPart(uint8_t *LeadInSTR,
 }
 
 
+/**
+ * @brief  Add Property to the object
+ * @note   To use this function, you must first create and initialize the File and
+ *         use TDMS_GenFirstPart
+ * 
+ * @param  Path: Object path
+ * @param  Buffer: Pointer to the buffer that data save in
+ * @note   If the buffer address is Null, then function only calculates needed
+ *         buffer size
+ * 
+ * @param  Size: Size of data in buffer (Byte)
+ * @param  Name: Name of Property
+ * @param  DataType: Data type of Property
+ * @param  Value: Pointer to the value of Property
+ * @retval TDMS_Result_t
+ *         - TDMS_OK: Operation was successful
+ *         - TDMS_WRONG_ARG: Wrong argument
+ */
+static TDMS_Result_t
+TDMS_AddPropertyToObject(char *Path,
+                        uint8_t *Buffer, uint32_t *Size,
+                        char *Name, TDMS_Data_t DataType, void *Value)
+{
+  uint32_t DataSize = 0;
+  uint32_t MetaDataLen = 0;
+  uint32_t PropertyDataLen = 0;
+
+  PropertyDataLen = dataTypeLength[DataType];
+  if (PropertyDataLen == 0 && DataType != TDMS_DataType_String)
+    return TDMS_WRONG_ARG;
+  
+  /*** ***/
+  /*** Meta Data len calculation ***/
+  /*** ***/
+  // (4B number of objects) +
+  // (4B file path length) +
+  // (4B raw data index) + (4B number of properties)
+  // (4B property name length) +
+  // (4B property data type)
+  MetaDataLen += 24;
+  MetaDataLen += strlen(Path); // Group path length
+  MetaDataLen += strlen(Name); // Property name length
+  if(DataType == TDMS_DataType_String)
+  {
+    // (4B string length)
+    MetaDataLen += 4;
+    MetaDataLen += strlen((const char *)Value); // String length
+  }
+  else
+    MetaDataLen += PropertyDataLen;
+  
+  
+  /*** ***/
+  /*** if Buffer address is NULL, return back. ***/
+  /*** ***/
+  if(Buffer == NULL)
+  {
+    DataSize = LeadInPartLen + MetaDataLen;
+    *Size = DataSize;
+    
+    return TDMS_OK;
+  }
+  
+  
+  /*** ***/
+  /*** generate lead in part ***/
+  /*** ***/
+  TDMS_GenerateLeadInPart(&Buffer[DataSize],
+                          kTocNewObjList | kTocMetaData,
+                          MetaDataLen,
+                          MetaDataLen);
+  DataSize += LeadInPartLen;
+
+
+  /*** ***/
+  /*** generate meta data ***/
+  /*** ***/
+  DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize], 1); // Number of objects
+
+  /*** File meta data ***/
+  DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
+                                         Path); // Object path
+  DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
+                                          0xFFFFFFFF); // Raw data index = 0xFFFFFFFF
+  DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
+                                          0x01); // Number of properties
+
+  DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
+                                         Name); // first Property name
+  DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
+                                          dataTypeBinary[DataType]); // Data type of the property value
+  
+  if (DataType == TDMS_DataType_String)
+  {
+    DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
+                                           (char *)Value); // Value of the property
+  }
+  else
+  {
+    memcpy(&Buffer[DataSize], Value, PropertyDataLen);
+    DataSize += PropertyDataLen;
+  }
+  
+  *Size = DataSize;
+  
+  return TDMS_OK;
+}
+
+
 
 /**
  ==================================================================================
@@ -394,42 +480,13 @@ TDMS_GenerateLeadInPart(uint8_t *LeadInSTR,
 
 /**
  * @brief  Initialize File object structure
- * @param  Description: Pointer to description string
- * @param  Title: Pointer to title string
- * @param  Author: Pointer to author string
  * @param  File: Pointer to File object structure
  * @retval TDMS_Result_t
  *         - TDMS_OK: Operation was successful
  */
 TDMS_Result_t
-TDMS_CreateFile(const char *Description,
-                const char *Title,
-                const char *Author,
-                TDMS_File_t *File)
+TDMS_InitFile(TDMS_File_t *File)
 {
-  TDMS_Result_t Retval;
-
-  // file description
-  Retval = TDMS_StrnCpy(File->FileDescription,
-                        Description,
-                        TDMS_FILE_DESCRIPTION_LEN);
-  if(Retval != TDMS_OK)
-    return Retval;
-
-  // file title
-  Retval = TDMS_StrnCpy(File->FileTitle,
-                        Title,
-                        TDMS_FILE_TITLE_LEN);
-  if(Retval != TDMS_OK)
-    return Retval;
-
-  // file author
-  Retval = TDMS_StrnCpy(File->FileAuthor,
-                        Author,
-                        TDMS_FILE_AUTHOR_LEN);
-  if(Retval != TDMS_OK)
-    return Retval;
-
   File->NumOfGroups = 0;
   
   return TDMS_OK;
@@ -438,39 +495,19 @@ TDMS_CreateFile(const char *Description,
 
 /**
  * @brief  Initialize Channel Group object structure
+ * @param  Group: Pointer to TDMS Channel Group object structure
  * @param  File: Pointer to the File object structure that Channel Group assign
  *               into
- * @param  Name: Pointer to the Name of TDMS Channel Group object
- * @param  Description: Pointer to the Description of TDMS Channel Group object
- * @param  Group: Pointer to TDMS Channel Group object structure
+ * @param  Name: Channel Group name
  * @retval TDMS_Result_t
  *         - TDMS_OK: Operation was successful
  *         - TDMS_OUT_OF_CAP: The file object capacity is full
  */
 TDMS_Result_t
-TDMS_AddGroup(TDMS_File_t *File,
-              const char *Name,
-              const char *Description,
-              TDMS_Group_t *Group)
+TDMS_AddGroupToFile(TDMS_Group_t *Group, TDMS_File_t *File, char *Name)
 {
-  TDMS_Result_t Retval;
-  
-  // Group name
-  Retval = TDMS_StrnCpy(Group->GroupName,
-                        Name,
-                        TDMS_GROUP_NAME_LEN);
-  if(Retval != TDMS_OK)
-    return Retval;
-
-  // Group description
-  Retval = TDMS_StrnCpy(Group->GroupDescription,
-                        Description,
-                        TDMS_GROUP_DESCRIPTION_LEN);
-  if(Retval != TDMS_OK)
-    return Retval;
-
   // Group path
-  TDMS_GenerateGroupPath(Group, Group->GroupPath);
+  TDMS_GenerateGroupPath(Group->GroupPath, Name);
   
   // set File pointer
   Group->FileOfGroup = (void *) File;
@@ -489,70 +526,42 @@ TDMS_AddGroup(TDMS_File_t *File,
 
 /**
  * @brief  Initialize Channel object structure
+ * @param  Channel: Pointer to TDMS Channel object structure
  * @param  Group: Pointer to the Channel Group object structure that Channel assign
  *                into
- * @param  DataType: Data type of Channel Raw data
- *         - tdsTypeVoid: Data type is unknown
- *         - tdsTypeI8: signed int 8 bit
- *         - tdsTypeI16: signed int 16 bit
- *         - tdsTypeI32: signed int 32 bit
- *         - tdsTypeI64: signed int 64 bit
- *         - tdsTypeU8: unsigned int 8 bit
- *         - tdsTypeU16: unsigned int 16 bit
- *         - tdsTypeU32: unsigned int 32 bit
- *         - tdsTypeU64: unsigned int 64 bit
- *         - tdsTypeSingleFloat: 4 byte floating point number
- *         - tdsTypeDoubleFloat: 8 byte floating point number
- *         - tdsTypeString: string, array of characters
- *         - tdsTypeBoolean: boolean data
- *         - tdsTypeTimeStamp: time stamp data
  * 
  * @param  Name: Pointer to Name of TDMS Channel object
- * @param  Description: Pointer to Description of TDMS Channel object
- * @param  UnitString: Pointer to UnitString of TDMS Channel object
- * @param  Channel: Pointer to TDMS Channel object structure
+ * @param  DataType: Data type of Channel Raw data
+ *         - TDMS_DataType_Void: Data type is unknown
+ *         - TDMS_DataType_I8: signed int 8 bit
+ *         - TDMS_DataType_I16: signed int 16 bit
+ *         - TDMS_DataType_I32: signed int 32 bit
+ *         - TDMS_DataType_I64: signed int 64 bit
+ *         - TDMS_DataType_U8: unsigned int 8 bit
+ *         - TDMS_DataType_U16: unsigned int 16 bit
+ *         - TDMS_DataType_U32: unsigned int 32 bit
+ *         - TDMS_DataType_U64: unsigned int 64 bit
+ *         - TDMS_DataType_SingleFloat: 4 byte floating point number
+ *         - TDMS_DataType_DoubleFloat: 8 byte floating point number
+ *         - TDMS_DataType_String: string, array of characters
+ *         - TDMS_DataType_Boolean: boolean data
+ *         - TDMS_DataType_TimeStamp: time stamp data
+ * 
  * @retval TDMS_Result_t
  *         - TDMS_OK: Operation was successful
  *         - TDMS_WRONG_ARG: Wrong argument
  */
 TDMS_Result_t
-TDMS_AddChannel(TDMS_Group_t *Group,
-                TDMS_Data_t DataType,
-                const char *Name,
-                const char *Description,
-                const char *UnitString,
-                TDMS_Channel_t *Channel)
+TDMS_AddChannelToGroup(TDMS_Channel_t *Channel, TDMS_Group_t *Group,
+                       char *Name, TDMS_Data_t DataType)
 {
-  TDMS_Result_t Retval;
-  
-  if(TDMS_DataBytesOfEachType(DataType)==0)
+  if(dataTypeLength[DataType] == 0)
     return TDMS_WRONG_ARG;
   
   Channel->ChannelDataType = DataType;
   
-  // channel name
-  Retval = TDMS_StrnCpy(Channel->ChannelName,
-                        Name,
-                        TDMS_CHANNEL_NAME_LEN);
-  if(Retval != TDMS_OK)
-    return Retval;
-
-  // channel description
-  Retval = TDMS_StrnCpy(Channel->ChannelDescription,
-                        Description,
-                        TDMS_CHANNEL_DESCRIPTION_LEN);
-  if (Retval != TDMS_OK)
-    return Retval;
-
-  // channel unitString
-  Retval = TDMS_StrnCpy(Channel->ChannelUitString,
-                        UnitString,
-                        TDMS_CHANNEL_UNIT_STRING_LEN);
-  if (Retval != TDMS_OK)
-    return Retval;
-  
   // channel path
-  TDMS_GenerateChannelPath(Group, Channel, Channel->ChannelPath);
+  TDMS_GenerateChannelPath(Group, Channel->ChannelPath, Name);
   
   // set Group pointer
   Channel->GroupOfChannel = (void *) Group;
@@ -605,34 +614,27 @@ TDMS_GenFirstPart(TDMS_File_t *File,
   noo = nog + tnoc + 1; // Groups number + total number of Channels + File object
 
   
-  /*** File meta data ***/
   MetaDataLen = 0;
-  MetaDataLen += 53;
-  MetaDataLen += strlen("Description"); // Property name
-  MetaDataLen += strlen(File->FileDescription); // Value of the property
-  MetaDataLen += strlen("Title"); // Property name
-  MetaDataLen += strlen(File->FileTitle); // Value of the property
-  MetaDataLen += strlen("Author"); // Property name
-  MetaDataLen += strlen(File->FileAuthor); // Value of the property
+
+  /*** File meta data ***/
+  // (4B number of objects) +
+  // (4B file path length) + (1B file path) +
+  // (4B raw data index) + (4B number of properties)
+  MetaDataLen += 17;
   
   /*** Groups meta data ***/
   for(CounterI=0; CounterI<nog; CounterI++)
   {
-    MetaDataLen += 24;
-    MetaDataLen += strlen(File->GroupArray[CounterI]->GroupPath); // Groups path
-    MetaDataLen += strlen("Description"); // Property name
-    // Value of the property
-    MetaDataLen += strlen(File->GroupArray[CounterI]->GroupDescription);
+    // (4B gorup path length) + (4B raw data index) + (4B number of properties)
+    MetaDataLen += 12;
+    MetaDataLen += strlen(File->GroupArray[CounterI]->GroupPath); // Groups path length
     
     /*** Channels meta data ***/
     for(CounterJ=0; CounterJ<noc[CounterI]; CounterJ++)
     {
-      MetaDataLen += 36;
+      // (4B channel path length) + (4B raw data index) + (4B number of properties)
+      MetaDataLen += 12;
       MetaDataLen += strlen(File->GroupArray[CounterI]->ChannelArray[CounterJ]->ChannelPath); //Channels path
-      MetaDataLen += strlen("Description"); // Property name
-      MetaDataLen += strlen(File->GroupArray[CounterI]->ChannelArray[CounterJ]->ChannelDescription); // Value of the property
-      MetaDataLen += strlen("Unit"); // Property name
-      MetaDataLen += strlen(File->GroupArray[CounterI]->ChannelArray[CounterJ]->ChannelUitString); // Value of the property
     }//for(CounterJ=0; CounterJ<noc[CounterI]; CounterJ++)
   }//for(CounterI=0; CounterI<nog; CounterI++)
   
@@ -670,28 +672,7 @@ TDMS_GenFirstPart(TDMS_File_t *File,
   DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
                                           0xFFFFFFFF); // Raw data index = 0xFFFFFFFF
   DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                          0x03); // Number of properties
-
-  DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                         "Description"); // first Property name
-  DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                          tdsTypeString); // Data type of the property value
-  DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                         File->FileDescription); // Value of the property
-
-  DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                         "Title"); // second Property name
-  DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                          tdsTypeString); // Data type of the property value
-  DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                         File->FileTitle); // Value of the property
-
-  DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                         "Author"); // third Property name
-  DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                          tdsTypeString); //Data type of the property value
-  DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                         File->FileAuthor); // Value of the property
+                                          0x00); // Number of properties
 
   /*** Goups meta data ***/
   for (CounterI = 0; CounterI < nog; CounterI++)
@@ -705,14 +686,7 @@ TDMS_GenFirstPart(TDMS_File_t *File,
     DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
                                             0xFFFFFFFF); // Raw data index = 0xFFFFFFFF
     DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                            0x01); // Number of properties
-
-    DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                           "Description"); // first Property name
-    DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                            tdsTypeString); // Data type of the property value
-    DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                           File->GroupArray[CounterI]->GroupDescription); // Value of the property
+                                            0x00); // Number of properties
 
     /*** Channels meta data ***/
     for(CounterJ=0; CounterJ<noc[CounterI]; CounterJ++)
@@ -728,23 +702,7 @@ TDMS_GenFirstPart(TDMS_File_t *File,
                                               0xFFFFFFFF); // Raw data index = 0xFFFFFFFF
 
       DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                              0x02); // Number of properties
-
-      DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                             "Description"); // first Property name
-      DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                              tdsTypeString); // Data type of the property value
-      DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                             File->GroupArray[CounterI]->ChannelArray[CounterJ]->ChannelDescription); // Value of the property
-
-      ///////////////////////////////////////
-      DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                             "Unit"); // second Property name
-      DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                              tdsTypeString); // Data type of the property value
-      DataSize += TDMS_SaveStrToMetaDataPart(&Buffer[DataSize],
-                                             File->GroupArray[CounterI]->ChannelArray[CounterJ]->ChannelUitString); // Value of the property
-
+                                              0x00); // Number of properties
     }//for(CounterJ=0; CounterJ<noc[CounterI]; CounterJ++)
   }  //for(CounterI=0; CounterI<nog; CounterI++)
 
@@ -755,6 +713,84 @@ TDMS_GenFirstPart(TDMS_File_t *File,
   return TDMS_OK;
 }
 
+
+/**
+ * @brief  Add Property to the file object
+ * @note   To use this function, you must first create and initialize the File and
+ *         use TDMS_GenFirstPart
+ * 
+ * @param  Buffer: Pointer to the buffer that data save in
+ * @note   If the buffer address is Null, then function only calculates needed
+ *         buffer size
+ * 
+ * @param  Size: Size of data in buffer (Byte)
+ * @param  Name: Name of Property
+ * @param  DataType: Data type of Property
+ * @param  Value: Pointer to the value of Property
+ * @retval TDMS_Result_t
+ *         - TDMS_OK: Operation was successful
+ *         - TDMS_WRONG_ARG: Wrong argument
+ */
+TDMS_Result_t
+TDMS_AddPropertyToFile(uint8_t *Buffer, uint32_t *Size,
+                       char *Name, TDMS_Data_t DataType, void *Value)
+{
+  return TDMS_AddPropertyToObject("/", Buffer, Size, Name, DataType, Value);
+}
+
+
+/**
+ * @brief  Add Property to the group object
+ * @note   To use this function, you must first create and initialize the File and
+ *         use TDMS_GenFirstPart
+ * 
+ * @param  Group: Pointer to TDMS group object structure
+ * @param  Buffer: Pointer to the buffer that data save in
+ * @note   If the buffer address is Null, then function only calculates needed
+ *         buffer size
+ * 
+ * @param  Size: Size of data in buffer (Byte)
+ * @param  Name: Name of Property
+ * @param  DataType: Data type of Property
+ * @param  Value: Pointer to the value of Property
+ * @retval TDMS_Result_t
+ *         - TDMS_OK: Operation was successful
+ *         - TDMS_WRONG_ARG: Wrong argument
+ */
+TDMS_Result_t
+TDMS_AddPropertyToGroup(TDMS_Group_t *Group,
+                        uint8_t *Buffer, uint32_t *Size,
+                        char *Name, TDMS_Data_t DataType, void *Value)
+{
+  return TDMS_AddPropertyToObject(Group->GroupPath, Buffer, Size, Name, DataType, Value);
+}
+
+
+/**
+ * @brief  Add Property to the channel object
+ * @note   To use this function, you must first create and initialize the File and
+ *         use TDMS_GenFirstPart
+ * 
+ * @param  Channel: Pointer to TDMS channel object structure
+ * @param  Buffer: Pointer to the buffer that data save in
+ * @note   If the buffer address is Null, then function only calculates needed
+ *         buffer size
+ * 
+ * @param  Size: Size of data in buffer (Byte)
+ * @param  Name: Name of Property
+ * @param  DataType: Data type of Property
+ * @param  Value: Pointer to the value of Property
+ * @retval TDMS_Result_t
+ *         - TDMS_OK: Operation was successful
+ *         - TDMS_WRONG_ARG: Wrong argument
+ */
+TDMS_Result_t
+TDMS_AddPropertyToChannel(TDMS_Channel_t *Channel,
+                          uint8_t *Buffer, uint32_t *Size,
+                          char *Name, TDMS_Data_t DataType, void *Value)
+{
+  return TDMS_AddPropertyToObject(Channel->ChannelPath, Buffer, Size, Name, DataType, Value);
+}
 
 /**
  * @brief  Set data to a Channel
@@ -790,8 +826,11 @@ TDMS_SetChannelDataValues(TDMS_Channel_t *Channel,
   /*** ***/
   /*** Raw Data len calculation ***/
   /*** ***/
-  RawDataLen = TDMS_DataBytesOfEachType(Channel->ChannelDataType) * NumOfValues;
-  if(Channel->ChannelDataType == tdsTypeBoolean)
+  RawDataLen = dataTypeLength[Channel->ChannelDataType] * NumOfValues;
+  if (RawDataLen == 0)
+    return TDMS_WRONG_ARG;
+
+  if(Channel->ChannelDataType == TDMS_DataType_Boolean)
   {
     uint8_t *ValuesBoolean = (uint8_t *) Values;
     for(CounterI=0; CounterI<NumOfValues; CounterI++)
@@ -804,7 +843,7 @@ TDMS_SetChannelDataValues(TDMS_Channel_t *Channel,
   /*** ***/
   MetaDataLen = 0;
   MetaDataLen += 32;
-  if(Channel->ChannelDataType == tdsTypeString)
+  if(Channel->ChannelDataType == TDMS_DataType_String)
     MetaDataLen += 8; // Total Size in bytes (only stored for variable length data types, e.g. strings)
   MetaDataLen += strlen(Channel->ChannelPath); //Channel path
   
@@ -843,12 +882,12 @@ TDMS_SetChannelDataValues(TDMS_Channel_t *Channel,
   DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
                                           0x14); // Length of index information
   DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                          (uint32_t)Channel->ChannelDataType); // Data type of the raw data assigned to this object
+                                          dataTypeBinary[Channel->ChannelDataType]); // Data type of the raw data assigned to this object
   DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
                                           0x01); // Dimension of the raw data array (must be 1)
   DataSize += TDMS_SaveDataLittleEndian64(&Buffer[DataSize],
                                           NumOfValues); // Number of raw data Values
-  if (Channel->ChannelDataType == tdsTypeString)
+  if (Channel->ChannelDataType == TDMS_DataType_String)
     DataSize += TDMS_SaveDataLittleEndian64(&Buffer[DataSize],
                                             strlen(Values)); // Total Size in bytes
 
@@ -943,12 +982,14 @@ TDMS_SetGroupDataValues(TDMS_Group_t *Group,
     if(NumOfValues[CounterI])
     {
       // Raw Data for each channel
-      RawDataLenCh[CounterI] = TDMS_DataBytesOfEachType(Group->ChannelArray[CounterI]->ChannelDataType) * NumOfValues[CounterI];
+      RawDataLenCh[CounterI] = dataTypeLength[Group->ChannelArray[CounterI]->ChannelDataType] * NumOfValues[CounterI];
+      if (RawDataLenCh[CounterI] == 0)
+        return TDMS_WRONG_ARG;
       
       // Meta Data
       MetaDataLen += 28;
-      if(Group->ChannelArray[CounterI]->ChannelDataType == tdsTypeString)
-        MetaDataLen += 8; // Total Size in bytes (only stored for variable length data types, e.g. strings)
+      if(Group->ChannelArray[CounterI]->ChannelDataType == TDMS_DataType_String)
+        MetaDataLen += 4; // Total Size in bytes (only stored for variable length data types, e.g. strings)
       MetaDataLen += strlen(Group->ChannelArray[CounterI]->ChannelPath); //Channel path
     }
     else
@@ -997,12 +1038,12 @@ TDMS_SetGroupDataValues(TDMS_Group_t *Group,
       DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
                                               0x14); // Length of index information
       DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
-                                              (uint32_t)Group->ChannelArray[CounterI]->ChannelDataType); // Data type of the raw data assigned to this object
+                                              dataTypeBinary[Group->ChannelArray[CounterI]->ChannelDataType]); // Data type of the raw data assigned to this object
       DataSize += TDMS_SaveDataLittleEndian32(&Buffer[DataSize],
                                               0x01); // Dimension of the raw data array (must be 1)
       DataSize += TDMS_SaveDataLittleEndian64(&Buffer[DataSize],
                                               NumOfValues[CounterI]); // Number of raw data Values
-      if (Group->ChannelArray[CounterI]->ChannelDataType == tdsTypeString)
+      if (Group->ChannelArray[CounterI]->ChannelDataType == TDMS_DataType_String)
         DataSize += TDMS_SaveDataLittleEndian64(&Buffer[DataSize],
                                                 strlen((const char *)*(Values + CounterI))); // Total Size in bytes
 

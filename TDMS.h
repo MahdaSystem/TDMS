@@ -23,7 +23,6 @@ extern "C" {
 
 
 /* Exported Data Types ----------------------------------------------------------*/
-typedef uint32_t TDMS_Data_t;
 
 /**
  * @brief  Functions result data type
@@ -34,6 +33,32 @@ typedef enum
   TDMS_OUT_OF_CAP   = -1,
   TDMS_WRONG_ARG    = -2
 } TDMS_Result_t;
+
+typedef enum TDMS_Data_e
+{
+  TDMS_DataType_Void = 0,
+  TDMS_DataType_I8,
+  TDMS_DataType_I16,
+  TDMS_DataType_I32,
+  TDMS_DataType_I64,
+  TDMS_DataType_U8,
+  TDMS_DataType_U16,
+  TDMS_DataType_U32,
+  TDMS_DataType_U64,
+  TDMS_DataType_SingleFloat,
+  TDMS_DataType_DoubleFloat,
+  TDMS_DataType_ExtendedFloat,
+  TDMS_DataType_SingleFloatWithUnit,
+  TDMS_DataType_DoubleFloatWithUnit,
+  TDMS_DataType_ExtendedFloatWithUnit,
+  TDMS_DataType_String,
+  TDMS_DataType_Boolean,
+  TDMS_DataType_TimeStamp,
+  TDMS_DataType_FixedPoint,
+  TDMS_DataType_ComplexSingleFloat,
+  TDMS_DataType_ComplexDoubleFloat,
+  TDMS_DataType_MAX // Do not use this
+} TDMS_Data_t;
 
 /**
  * @brief  Time data type of TDMS file
@@ -52,12 +77,9 @@ typedef struct
  */
 typedef struct 
 {
-  TDMS_Data_t ChannelDataType;
-  char ChannelName[TDMS_CHANNEL_NAME_LEN];
-  char ChannelDescription[TDMS_CHANNEL_DESCRIPTION_LEN];
-  char ChannelUitString[TDMS_CHANNEL_UNIT_STRING_LEN];
-  char ChannelPath[TDMS_GROUP_NAME_LEN+TDMS_CHANNEL_NAME_LEN+6];
   void *GroupOfChannel;
+  TDMS_Data_t ChannelDataType;
+  char ChannelPath[TDMS_GROUP_NAME_LEN+TDMS_CHANNEL_NAME_LEN+6];
 } TDMS_Channel_t;
 
 /**
@@ -65,12 +87,10 @@ typedef struct
  */
 typedef struct 
 {
-  char GroupName[TDMS_GROUP_NAME_LEN];
-  char GroupDescription[TDMS_GROUP_DESCRIPTION_LEN];
-  char GroupPath[TDMS_GROUP_DESCRIPTION_LEN+3];
-  uint8_t NumOfChannels;
-  TDMS_Channel_t *ChannelArray[TDMS_MAX_CHANNEL_OF_GROUP];
   void *FileOfGroup;
+  uint32_t NumOfChannels;
+  TDMS_Channel_t *ChannelArray[TDMS_MAX_CHANNEL_OF_GROUP];
+  char GroupPath[TDMS_GROUP_NAME_LEN+3];
 } TDMS_Group_t;
 
 /**
@@ -78,37 +98,9 @@ typedef struct
  */
 typedef struct 
 {
-  char FileDescription[TDMS_FILE_DESCRIPTION_LEN];
-  char FileTitle[TDMS_FILE_TITLE_LEN];
-  char FileAuthor[TDMS_FILE_AUTHOR_LEN];
-  uint8_t NumOfGroups;
+  uint32_t NumOfGroups;
   TDMS_Group_t *GroupArray[TDMS_MAX_GROUP_OF_FILE];
 } TDMS_File_t;
-
-
-/* Exported Constants -----------------------------------------------------------*/
-#define tdsTypeVoid                   0x00000000
-#define tdsTypeI8                     0x00000001
-#define tdsTypeI16                    0x00000002
-#define tdsTypeI32                    0x00000003
-#define tdsTypeI64                    0x00000004
-#define tdsTypeU8                     0x00000005
-#define tdsTypeU16                    0x00000006
-#define tdsTypeU32                    0x00000007
-#define tdsTypeU64                    0x00000008
-#define tdsTypeSingleFloat            0x00000009
-#define tdsTypeDoubleFloat            0x0000000A
-#define tdsTypeExtendedFloat          0x0000000B
-#define tdsTypeSingleFloatWithUnit    0x00000019
-#define tdsTypeDoubleFloatWithUnit    0x0000001A
-#define tdsTypeExtendedFloatWithUnit  0x0000001B
-#define tdsTypeString                 0x00000020
-#define tdsTypeBoolean                0x00000021
-#define tdsTypeTimeStamp              0x00000044
-#define tdsTypeFixedPoint             0x0000004F
-#define tdsTypeComplexSingleFloat     0x0008000C
-#define tdsTypeComplexDoubleFloat     0x0010000D
-#define tdsTypeDAQmxRawData           0xFFFFFFFF
 
 
 
@@ -120,77 +112,66 @@ typedef struct
 
 /**
  * @brief  Initialize File object structure
- * @param  Description: Pointer to description string
- * @param  Title: Pointer to title string
- * @param  Author: Pointer to author string
  * @param  File: Pointer to File object structure
  * @retval TDMS_Result_t
  *         - TDMS_OK: Operation was successful
  */
 TDMS_Result_t
-TDMS_CreateFile(const char *Description,
-                const char *Title,
-                const char *Author,
-                TDMS_File_t *File);
+TDMS_InitFile(TDMS_File_t *File);
 
 
 /**
  * @brief  Initialize Channel Group object structure
+ * @param  Group: Pointer to TDMS Channel Group object structure
  * @param  File: Pointer to the File object structure that Channel Group assign
  *               into
- * @param  Name: Pointer to the Name of TDMS Channel Group object
- * @param  Description: Pointer to the Description of TDMS Channel Group object
- * @param  Group: Pointer to TDMS Channel Group object structure
+ * 
+ * @param  Name: Channel Group name
  * @retval TDMS_Result_t
  *         - TDMS_OK: Operation was successful
  *         - TDMS_OUT_OF_CAP: The file object capacity is full
  */
 TDMS_Result_t
-TDMS_AddGroup(TDMS_File_t *File,
-              const char *Name,
-              const char *Description,
-              TDMS_Group_t *Group);
+TDMS_AddGroupToFile(TDMS_Group_t *Group, TDMS_File_t *File, char *Name);
 
 
 /**
  * @brief  Initialize Channel object structure
+ * @param  Channel: Pointer to TDMS Channel object structure
  * @param  Group: Pointer to the Channel Group object structure that Channel assign
  *                into
- * @param  DataType: Data type of Channel Raw data
- *         - tdsTypeVoid: Data type is unknown
- *         - tdsTypeI8: signed int 8 bit
- *         - tdsTypeI16: signed int 16 bit
- *         - tdsTypeI32: signed int 32 bit
- *         - tdsTypeI64: signed int 64 bit
- *         - tdsTypeU8: unsigned int 8 bit
- *         - tdsTypeU16: unsigned int 16 bit
- *         - tdsTypeU32: unsigned int 32 bit
- *         - tdsTypeU64: unsigned int 64 bit
- *         - tdsTypeSingleFloat: 4 byte floating point number
- *         - tdsTypeDoubleFloat: 8 byte floating point number
- *         - tdsTypeString: string, array of characters
- *         - tdsTypeBoolean: boolean data
- *         - tdsTypeTimeStamp: time stamp data
  * 
  * @param  Name: Pointer to Name of TDMS Channel object
- * @param  Description: Pointer to Description of TDMS Channel object
- * @param  UnitString: Pointer to UnitString of TDMS Channel object
- * @param  Channel: Pointer to TDMS Channel object structure
+ * @param  DataType: Data type of Channel Raw data
+ *         - TDMS_DataType_Void: Data type is unknown
+ *         - TDMS_DataType_I8: signed int 8 bit
+ *         - TDMS_DataType_I16: signed int 16 bit
+ *         - TDMS_DataType_I32: signed int 32 bit
+ *         - TDMS_DataType_I64: signed int 64 bit
+ *         - TDMS_DataType_U8: unsigned int 8 bit
+ *         - TDMS_DataType_U16: unsigned int 16 bit
+ *         - TDMS_DataType_U32: unsigned int 32 bit
+ *         - TDMS_DataType_U64: unsigned int 64 bit
+ *         - TDMS_DataType_SingleFloat: 4 byte floating point number
+ *         - TDMS_DataType_DoubleFloat: 8 byte floating point number
+ *         - TDMS_DataType_String: string, array of characters
+ *         - TDMS_DataType_Boolean: boolean data
+ *         - TDMS_DataType_TimeStamp: time stamp data
+ * 
  * @retval TDMS_Result_t
  *         - TDMS_OK: Operation was successful
  *         - TDMS_WRONG_ARG: Wrong argument
  */
 TDMS_Result_t
-TDMS_AddChannel(TDMS_Group_t *Group,
-                TDMS_Data_t DataType,
-                const char *Name,
-                const char *Description,
-                const char *UnitString,
-                TDMS_Channel_t *Channel);
+TDMS_AddChannelToGroup(TDMS_Channel_t *Channel, TDMS_Group_t *Group,
+                       char *Name, TDMS_Data_t DataType);
 
 
 /**
  * @brief  Generate First part of TDMS file
+ * @note   To use this function, you must first create the File, and add
+ *         Groups and Channels.
+ * 
  * @param  File: Pointer to TDMS File object structure
  * @param  Buffer: Pointer to the buffer that data save in
  * @param  Size: Size of data in buffer (Byte)
@@ -201,6 +182,76 @@ TDMS_Result_t
 TDMS_GenFirstPart(TDMS_File_t *File,
                   uint8_t *Buffer,
                   uint32_t *Size);
+
+
+/**
+ * @brief  Add Property to the file object
+ * @note   To use this function, you must first create and initialize the File and
+ *         use TDMS_GenFirstPart
+ * 
+ * @param  Buffer: Pointer to the buffer that data save in
+ * @note   If the buffer address is Null, then function only calculates needed
+ *         buffer size
+ * 
+ * @param  Size: Size of data in buffer (Byte)
+ * @param  Name: Name of Property
+ * @param  DataType: Data type of Property
+ * @param  Value: Pointer to the value of Property
+ * @retval TDMS_Result_t
+ *         - TDMS_OK: Operation was successful
+ *         - TDMS_WRONG_ARG: Wrong argument
+ */
+TDMS_Result_t
+TDMS_AddPropertyToFile(uint8_t *Buffer, uint32_t *Size,
+                       char *Name, TDMS_Data_t DataType, void *Value);
+
+
+/**
+ * @brief  Add Property to the group object
+ * @note   To use this function, you must first create and initialize the File and
+ *         use TDMS_GenFirstPart
+ * 
+ * @param  Group: Pointer to TDMS group object structure
+ * @param  Buffer: Pointer to the buffer that data save in
+ * @note   If the buffer address is Null, then function only calculates needed
+ *         buffer size
+ * 
+ * @param  Size: Size of data in buffer (Byte)
+ * @param  Name: Name of Property
+ * @param  DataType: Data type of Property
+ * @param  Value: Pointer to the value of Property
+ * @retval TDMS_Result_t
+ *         - TDMS_OK: Operation was successful
+ *         - TDMS_WRONG_ARG: Wrong argument
+ */
+TDMS_Result_t
+TDMS_AddPropertyToGroup(TDMS_Group_t *Group,
+                        uint8_t *Buffer, uint32_t *Size,
+                        char *Name, TDMS_Data_t DataType, void *Value);
+
+
+/**
+ * @brief  Add Property to the channel object
+ * @note   To use this function, you must first create and initialize the File and
+ *         use TDMS_GenFirstPart
+ * 
+ * @param  Channel: Pointer to TDMS channel object structure
+ * @param  Buffer: Pointer to the buffer that data save in
+ * @note   If the buffer address is Null, then function only calculates needed
+ *         buffer size
+ * 
+ * @param  Size: Size of data in buffer (Byte)
+ * @param  Name: Name of Property
+ * @param  DataType: Data type of Property
+ * @param  Value: Pointer to the value of Property
+ * @retval TDMS_Result_t
+ *         - TDMS_OK: Operation was successful
+ *         - TDMS_WRONG_ARG: Wrong argument
+ */
+TDMS_Result_t
+TDMS_AddPropertyToChannel(TDMS_Channel_t *Channel,
+                          uint8_t *Buffer, uint32_t *Size,
+                          char *Name, TDMS_Data_t DataType, void *Value);
 
 
 /**

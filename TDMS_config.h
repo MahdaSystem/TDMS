@@ -20,14 +20,8 @@ extern "C" {
  * @brief  Max NULL terminated strings length of File, Group and Channel data
  *         types
  */
-#define TDMS_FILE_DESCRIPTION_LEN     30
-#define TDMS_FILE_TITLE_LEN           30
-#define TDMS_FILE_AUTHOR_LEN          30
 #define TDMS_GROUP_NAME_LEN           30
-#define TDMS_GROUP_DESCRIPTION_LEN    30
 #define TDMS_CHANNEL_NAME_LEN         30
-#define TDMS_CHANNEL_DESCRIPTION_LEN  30
-#define TDMS_CHANNEL_UNIT_STRING_LEN  30
 
 /**
  * @brief  Determines max Channels of Group and max Groups of TDMS file
