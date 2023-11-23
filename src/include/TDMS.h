@@ -79,7 +79,7 @@ typedef struct
 {
   void *GroupOfChannel;
   TDMS_Data_t ChannelDataType;
-  char ChannelPath[TDMS_GROUP_NAME_LEN+TDMS_CHANNEL_NAME_LEN+6];
+  char ChannelPath[TDMS_CONFIG_GROUP_NAME_LEN+TDMS_CONFIG_CHANNEL_NAME_LEN+6];
 } TDMS_Channel_t;
 
 /**
@@ -89,8 +89,8 @@ typedef struct
 {
   void *FileOfGroup;
   uint32_t NumOfChannels;
-  TDMS_Channel_t *ChannelArray[TDMS_MAX_CHANNEL_OF_GROUP];
-  char GroupPath[TDMS_GROUP_NAME_LEN+3];
+  TDMS_Channel_t *ChannelArray[TDMS_CONFIG_MAX_CHANNEL_OF_GROUP];
+  char GroupPath[TDMS_CONFIG_GROUP_NAME_LEN+3];
 } TDMS_Group_t;
 
 /**
@@ -99,7 +99,7 @@ typedef struct
 typedef struct 
 {
   uint32_t NumOfGroups;
-  TDMS_Group_t *GroupArray[TDMS_MAX_GROUP_OF_FILE];
+  TDMS_Group_t *GroupArray[TDMS_CONFIG_MAX_GROUP_OF_FILE];
 } TDMS_File_t;
 
 

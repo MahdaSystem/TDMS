@@ -262,7 +262,7 @@ TDMS_SaveDataLittleEndian32(uint8_t *data, uint32_t value)
   
   for (uint8_t i = 0; i < 4; i++)
   {
-#if (TDMS_SYSTEM_ENDIANNESS == 0)
+#if (TDMS_CONFIG_SYSTEM_ENDIANNESS == 0)
     data[i] = Buffer.Uint8Value[i];
 #else
     data[i] = Buffer.Uint8Value[4-i];
@@ -292,7 +292,7 @@ TDMS_SaveDataLittleEndian64(uint8_t *data, uint64_t value)
 
   for (uint8_t i = 0; i < 8; i++)
   {
-#if (TDMS_SYSTEM_ENDIANNESS == 0)
+#if (TDMS_CONFIG_SYSTEM_ENDIANNESS == 0)
     data[i] = Buffer.Uint8Value[i];
 #else
     data[i] = Buffer.Uint8Value[8-i];
@@ -513,7 +513,7 @@ TDMS_AddGroupToFile(TDMS_Group_t *Group, TDMS_File_t *File, char *Name)
   Group->FileOfGroup = (void *) File;
   
   // add group to file obj
-  if (File->NumOfGroups >= TDMS_MAX_GROUP_OF_FILE)
+  if (File->NumOfGroups >= TDMS_CONFIG_MAX_GROUP_OF_FILE)
     return TDMS_OUT_OF_CAP;
   File->GroupArray[File->NumOfGroups] = Group;
   File->NumOfGroups++;
@@ -567,7 +567,7 @@ TDMS_AddChannelToGroup(TDMS_Channel_t *Channel, TDMS_Group_t *Group,
   Channel->GroupOfChannel = (void *) Group;
   
   // add channel to group obj
-  if (Group->NumOfChannels >= TDMS_MAX_CHANNEL_OF_GROUP)
+  if (Group->NumOfChannels >= TDMS_CONFIG_MAX_CHANNEL_OF_GROUP)
     return TDMS_OUT_OF_CAP;
   Group->ChannelArray[Group->NumOfChannels] = Channel;
   Group->NumOfChannels++;
@@ -594,7 +594,7 @@ TDMS_GenFirstPart(TDMS_File_t *File,
   uint32_t CounterJ = 0;
   uint32_t CounterK = 0;
   uint32_t nog = 0; // Number Of Groups
-  uint32_t noc[TDMS_MAX_CHANNEL_OF_GROUP] = {0}; // Number Of Channel of each Group
+  uint32_t noc[TDMS_CONFIG_MAX_CHANNEL_OF_GROUP] = {0}; // Number Of Channel of each Group
   uint32_t tnoc = 0; //  Total Number Of Channel
   uint32_t noo = 0; //  Number Of Objects
   uint32_t MetaDataLen = 0;
@@ -939,14 +939,14 @@ TDMS_SetGroupDataValues(TDMS_Group_t *Group,
                         )
 {
   uint32_t DataSize = 0;
-  uint32_t RawDataLenCh[TDMS_MAX_CHANNEL_OF_GROUP] = {0}; // Raw Data for each channel
+  uint32_t RawDataLenCh[TDMS_CONFIG_MAX_CHANNEL_OF_GROUP] = {0}; // Raw Data for each channel
   uint32_t RawDataLen = 0; // Bytes
   uint32_t MetaDataLen = 0;
   uint32_t NumberOfObjects = 0;
   uint16_t CounterI = 0;
 
-  void* Values[TDMS_MAX_CHANNEL_OF_GROUP];
-  uint32_t NumOfValues[TDMS_MAX_CHANNEL_OF_GROUP];
+  void* Values[TDMS_CONFIG_MAX_CHANNEL_OF_GROUP];
+  uint32_t NumOfValues[TDMS_CONFIG_MAX_CHANNEL_OF_GROUP];
   
   va_list valist;
 

@@ -20,21 +20,21 @@ extern "C" {
  * @brief  Max NULL terminated strings length of File, Group and Channel data
  *         types
  */
-#define TDMS_GROUP_NAME_LEN           30
-#define TDMS_CHANNEL_NAME_LEN         30
+#define TDMS_CONFIG_GROUP_NAME_LEN          30
+#define TDMS_CONFIG_CHANNEL_NAME_LEN        30
 
 /**
  * @brief  Determines max Channels of Group and max Groups of TDMS file
  */
-#define TDMS_MAX_GROUP_OF_FILE        4
-#define TDMS_MAX_CHANNEL_OF_GROUP     8
+#define TDMS_CONFIG_MAX_GROUP_OF_FILE       4
+#define TDMS_CONFIG_MAX_CHANNEL_OF_GROUP    8
 
 /**
  * @brief  Determines system Endianness
  *         - 0: little-endian
  *         - 1: big-endian
  */
-#define TDMS_SYSTEM_ENDIANNESS        0
+#define TDMS_CONFIG_SYSTEM_ENDIANNESS       0
 
 
 
