@@ -10,18 +10,20 @@ SRC = ./main.c ../../src/TDMS.c
 
 ifeq ($(OS),Windows_NT)
 FIXPATH = $(subst /,\,$1)
-RMD := rd /s /q
-MD := mkdir
+RMD = rd /s /q
+MD = mkdir
+EXESUFFIX = .exe
 else
 FIXPATH = $1
 RMD = rm -r
-MD := mkdir -p
+MD = mkdir -p
+EXESUFFIX = .elf
 endif
 
 
 SOURCES = $(filter %.c, $(SRC))
 INCLUDES = $(patsubst %,-I%, $(INC_DIR:%/=%))
-OUTPUT_ELF = $(addsuffix .elf,$(call FIXPATH,$(BUILD_DIR)/$(TARGET)))
+OUTPUT_EXE = $(addsuffix $(EXESUFFIX),$(call FIXPATH,$(BUILD_DIR)/$(TARGET)))
 
 
 all: $(BUILD_DIR) $(TARGET)
@@ -32,9 +34,9 @@ clean:
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $(call FIXPATH,$(addprefix $(BUILD_DIR)/,$(notdir $@)))
 
-# elf file
+# executable file
 $(TARGET): $(SOURCES:.c=.o)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(OUTPUT_ELF) $(call FIXPATH,$(addprefix $(BUILD_DIR)/,$(notdir $(SOURCES:.c=.o))))
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(OUTPUT_EXE) $(call FIXPATH,$(addprefix $(BUILD_DIR)/,$(notdir $(SOURCES:.c=.o))))
 
 $(BUILD_DIR):
 	$(MD) $(call FIXPATH,$(BUILD_DIR))
