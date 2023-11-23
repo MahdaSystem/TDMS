@@ -22,6 +22,28 @@ extern "C" {
 #include <stdint.h>
 
 
+/* Configurations ---------------------------------------------------------------*/
+#ifndef TDMS_CONFIG_GROUP_NAME_LEN
+  #define TDMS_CONFIG_GROUP_NAME_LEN  30
+#endif
+
+#ifndef TDMS_CONFIG_CHANNEL_NAME_LEN
+  #define TDMS_CONFIG_CHANNEL_NAME_LEN  30
+#endif
+
+#ifndef TDMS_CONFIG_MAX_GROUP_OF_FILE
+  #define TDMS_CONFIG_MAX_GROUP_OF_FILE  4
+#endif
+
+#ifndef TDMS_CONFIG_MAX_CHANNEL_OF_GROUP
+  #define TDMS_CONFIG_MAX_CHANNEL_OF_GROUP  8
+#endif
+
+#ifndef TDMS_CONFIG_SYSTEM_ENDIANNESS
+  #define TDMS_CONFIG_SYSTEM_ENDIANNESS  0
+#endif
+
+
 /* Exported Data Types ----------------------------------------------------------*/
 
 /**
